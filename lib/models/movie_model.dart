@@ -2,6 +2,8 @@
 //
 //     final movieModel = movieModelFromJson(jsonString);
 
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 
 MovieModel movieModelFromJson(String str) =>
@@ -47,8 +49,8 @@ class Result {
 
   int id;
   String overview;
-  String posterPath;
-  DateTime releaseDate;
+  String? posterPath;
+  DateTime? releaseDate;
   String title;
   double voteAverage;
   List<int> genreIds;
@@ -68,7 +70,7 @@ class Result {
         "overview": overview,
         "poster_path": posterPath,
         "release_date":
-            "${releaseDate.year.toString().padLeft(4, '0')}-${releaseDate.month.toString().padLeft(2, '0')}-${releaseDate.day.toString().padLeft(2, '0')}",
+            "${releaseDate?.year.toString().padLeft(4, '0')}-${releaseDate?.month.toString().padLeft(2, '0')}-${releaseDate?.day.toString().padLeft(2, '0')}",
         "title": title,
         "vote_average": voteAverage,
         "genre_ids": List<dynamic>.from(genreIds.map((x) => x)),

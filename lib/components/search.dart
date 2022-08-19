@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moovie/constants.dart';
+import 'package:moovie/main.dart';
 
 class Search extends ConsumerStatefulWidget {
   const Search({Key? key, required this.getSearchResults}) : super(key: key);
@@ -15,6 +16,7 @@ class Search extends ConsumerStatefulWidget {
 class _SearchState extends ConsumerState<Search> {
   @override
   Widget build(BuildContext context) {
+    // ignore: avoid_unnecessary_containers
     return Container(
       child: CupertinoTextField(
         prefix: const Padding(
@@ -31,6 +33,7 @@ class _SearchState extends ConsumerState<Search> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         onChanged: (query) {
           setState(() {
+            ref.read(queryProvider.state).state = query;
             query.isNotEmpty ? widget.getSearchResults(query) : null;
           });
         },

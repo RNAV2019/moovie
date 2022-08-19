@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,17 +14,17 @@ class ApiService {
   var client = http.Client();
 
   // Gets a list of recent movies
-  Future<List<Result>?> getMovies(int? page) async {
+  Future<List<Result>?> getMovies(int page) async {
     try {
       var uri = Uri.parse(
-          "$BASE_URL/now_playing?api_key=${dotenv.env['API_KEY']}&language=en-GB&page=${page ?? 1}");
+          "$BASE_URL/now_playing?api_key=${dotenv.env['API_KEY']}&page=$page&language=en_GB");
       var response = await client.get(uri);
       if (response.statusCode == 200) {
         var json = response.body;
         return movieModelFromJson(json).results;
       }
-    } catch (e) {
-      log(e.toString());
+    } catch (e, s) {
+      log("$e - $s");
     }
     return null;
   }
@@ -39,8 +41,8 @@ class ApiService {
         // final subset = decoded['genres'][0];
         return data;
       }
-    } catch (e) {
-      log(e.toString());
+    } catch (e, s) {
+      log("$e - $s");
     }
     return;
   }
@@ -57,24 +59,24 @@ class ApiService {
         // return decoded["runtime"].toString();
         return movieInfoModelFromJson(json);
       }
-    } catch (e) {
-      log(e.toString());
+    } catch (e, s) {
+      log("$e - $s");
     }
     return null;
   }
 
   // Search through The Movie Database for the movies
-  Future<List<SearchResult>?> searchMovie(String query) async {
+  Future<List<SearchResult>?> searchMovie(String query, int pageKey) async {
     try {
       var uri = Uri.parse(
-          "$BASE_SEARCH_URL?api_key=${dotenv.env['API_KEY']}&query=$query");
+          "$BASE_SEARCH_URL?api_key=${dotenv.env['API_KEY']}&query=$query&page=$pageKey&language=en_GB");
       var response = await client.get(uri);
       if (response.statusCode == 200) {
         var json = response.body;
         return searchModelFromJson(json).results;
       }
     } catch (e, s) {
-      log("$e - $s - SearchResults");
+      log("$e - $s");
     }
     return null;
   }

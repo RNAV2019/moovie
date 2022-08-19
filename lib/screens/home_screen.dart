@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:moovie/constants.dart';
 import 'package:moovie/main.dart';
 import 'package:moovie/models/movie_model.dart';
@@ -19,25 +20,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<MovieInfo> movieInfos = [];
   Map<int, String> genreMap = {};
   bool isLoaded = false;
-  int pageNumber = 1;
+
+  static const _pageSize = 20;
+
+  final PagingController<int, Result> _pagingController =
+      PagingController(firstPageKey: 1);
 
   @override
   void initState() {
     super.initState();
-    _getMoviesAndInfo(1);
+    getListGenres();
+    _pagingController.addPageRequestListener((pageKey) {
+      _fetchPage(pageKey);
+    });
   }
 
-  _getMoviesAndInfo(int? page) async {
-    movies = (await ApiService().getMovies(page))!;
+  @override
+  void dispose() {
+    super.dispose();
+    _pagingController.dispose();
+  }
+
+  Future<void> getListGenres() async {
     List<dynamic> genres = (await ApiService().getGenres())!;
     for (var i = 0; i < genres.length; i++) {
       genreMap.addAll({genres[i]['id']: genres[i]['name']});
     }
+  }
 
-    if (movies.isNotEmpty) {
-      setState(() {
-        isLoaded = true;
-      });
+  Future<void> _fetchPage(int pageKey) async {
+    try {
+      final newItems = (await ApiService().getMovies(pageKey))!;
+      final isLastPage = newItems.length < _pageSize;
+      if (isLastPage) {
+        _pagingController.appendLastPage(newItems);
+      } else {
+        final nextPageKey = pageKey + newItems.length;
+        _pagingController.appendPage(newItems, nextPageKey);
+      }
+    } catch (error) {
+      _pagingController.error = error;
     }
   }
 
@@ -96,53 +118,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 height: 18,
               ),
               Expanded(
-                child: Visibility(
-                  visible: isLoaded,
-                  replacement: Center(
-                    child: CircularProgressIndicator(
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
+                child: PagedGridView<int, Result>(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    childAspectRatio: 1800 / 2700,
+                    maxCrossAxisExtent: 200,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
                   ),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      childAspectRatio: 1800 / 2700,
-                      maxCrossAxisExtent: 200,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
-                    ),
-                    itemCount: movies.length,
-                    itemBuilder: (BuildContext context, int index) {
+                  pagingController: _pagingController,
+                  builderDelegate: PagedChildBuilderDelegate<Result>(
+                    itemBuilder: (context, item, index) {
                       return InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () {
                           List<String> genreNames = [];
-                          for (var i = 0;
-                              i < movies[index].genreIds.length;
-                              i++) {
-                            if (genreMap
-                                .containsKey(movies[index].genreIds[i])) {
-                              genreNames.add(genreMap[movies[index].genreIds[i]]
-                                  as String);
+                          for (var i = 0; i < item.genreIds.length; i++) {
+                            if (genreMap.containsKey(item.genreIds[i])) {
+                              genreNames
+                                  .add(genreMap[item.genreIds[i]] as String);
                             }
                           }
 
                           Navigator.of(context).push(MaterialPageRoute(
                               builder: (context) => DetailsScreen(
-                                    movie: movies[index],
+                                    movie: item,
                                     genres: genreNames,
                                   )));
                         },
                         child: Container(
                           alignment: Alignment.center,
                           child: Hero(
-                            tag: movies[index].id,
+                            tag: item.id,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(16),
-                              child: CachedNetworkImage(
-                                imageUrl:
-                                    'https://image.tmdb.org/t/p/original${movies[index].posterPath}',
-                              ),
+                              child: item.posterPath == null
+                                  ? Container(
+                                      width: 1800,
+                                      height: 2700,
+                                      color: Colors.grey[600],
+                                      child: const Center(
+                                          child: Icon(
+                                        Icons.block,
+                                        color: Colors.red,
+                                        size: 64,
+                                      )),
+                                    )
+                                  : CachedNetworkImage(
+                                      imageUrl:
+                                          'https://image.tmdb.org/t/p/original${item.posterPath}',
+                                      key: UniqueKey(),
+                                    ),
                             ),
                           ),
                         ),

@@ -7,6 +7,7 @@ import 'package:moovie/screens/search_screen.dart';
 import 'package:moovie/screens/settings_screen.dart';
 
 final darkModeProvider = StateProvider<bool>((ref) => true);
+final queryProvider = StateProvider<String>((ref) => "Marvel");
 
 Future main() async {
   await dotenv.load(fileName: '.env');

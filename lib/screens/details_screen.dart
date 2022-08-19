@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -148,7 +150,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                     width: 8,
                                   ),
                                   Text(
-                                    '${widget.movie.releaseDate.day}/${widget.movie.releaseDate.month}/${widget.movie.releaseDate.year}',
+                                    '${widget.movie.releaseDate?.day}/${widget.movie.releaseDate?.month}/${widget.movie.releaseDate?.year}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: isDarkMode

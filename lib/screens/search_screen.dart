@@ -18,11 +18,11 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   List<SearchResult>? results = [];
   Map<int, String> genreMap = {};
+  int page = 1;
 
   @override
   void initState() {
     super.initState();
-    getSearchResults("Marvel");
     getGenres();
   }
 
@@ -34,7 +34,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   void getSearchResults(String query) async {
-    results = await ApiService().searchMovie(query);
+    results = await ApiService().searchMovie(query, 1);
+    setState(() {
+      results;
+    });
+  }
+
+  void getNewSearchResults(String query) async {
+    List<SearchResult>? tmpResults =
+        await ApiService().searchMovie(query, page);
+    tmpResults != null
+        ? results?.addAll(tmpResults.map((movie) => movie))
+        : null;
     setState(() {
       results;
     });
@@ -43,6 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     bool isDarkMode = ref.watch(darkModeProvider);
+    String queryState = ref.watch(queryProvider);
     return Scaffold(
       backgroundColor: isDarkMode ? bgColorDark : bgColorLight,
       appBar: AppBar(
@@ -74,66 +86,83 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               Flexible(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      childAspectRatio: 1800 / 2700,
-                      maxCrossAxisExtent: 200,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
-                    ),
-                    itemCount: results!.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          List<String> genreNames = [];
-                          for (var i = 0;
-                              i < results![index].genreIds.length;
-                              i++) {
-                            if (genreMap
-                                .containsKey(results![index].genreIds[i])) {
-                              genreNames.add(
-                                  genreMap[results![index].genreIds[i]]
-                                      as String);
+                  child: NotificationListener<ScrollEndNotification>(
+                    onNotification: (scrollEnd) {
+                      final metrics = scrollEnd.metrics;
+                      if (metrics.atEdge) {
+                        bool isTop = metrics.pixels == 0;
+                        if (isTop) {
+                        } else {
+                          setState(() {
+                            page += 1;
+                            getNewSearchResults(queryState);
+                          });
+                        }
+                      }
+                      return true;
+                    },
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        childAspectRatio: 1800 / 2700,
+                        maxCrossAxisExtent: 200,
+                        crossAxisSpacing: 20,
+                        mainAxisSpacing: 20,
+                      ),
+                      itemCount: results?.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            List<String> genreNames = [];
+                            for (var i = 0;
+                                i < results![index].genreIds.length;
+                                i++) {
+                              if (genreMap
+                                  .containsKey(results![index].genreIds[i])) {
+                                genreNames.add(
+                                    genreMap[results![index].genreIds[i]]
+                                        as String);
+                              }
                             }
-                          }
 
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => DetailsScreen(
-                                    movie: Result.fromJson(
-                                        results![index].toJson()),
-                                    genres: genreNames,
-                                  )));
-                        },
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Hero(
-                            tag: results![index].id,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: results![index].posterPath == null
-                                  ? Container(
-                                      width: 1800,
-                                      height: 2700,
-                                      color: Colors.grey[600],
-                                      child: const Center(
-                                          child: Icon(
-                                        Icons.block,
-                                        color: Colors.red,
-                                        size: 64,
-                                      )),
-                                    )
-                                  : CachedNetworkImage(
-                                      imageUrl:
-                                          'https://image.tmdb.org/t/p/original${results![index].posterPath}',
-                                      key: UniqueKey(),
-                                    ),
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => DetailsScreen(
+                                      movie: Result.fromJson(
+                                          results![index].toJson()),
+                                      genres: genreNames,
+                                    )));
+                          },
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Hero(
+                              tag: results != null ? results![index].id : "",
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: results == null ||
+                                        results?[index].posterPath == null
+                                    ? Container(
+                                        width: 1800,
+                                        height: 2700,
+                                        color: Colors.grey[600],
+                                        child: const Center(
+                                            child: Icon(
+                                          Icons.block,
+                                          color: Colors.red,
+                                          size: 64,
+                                        )),
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl:
+                                            'https://image.tmdb.org/t/p/original${results![index].posterPath}',
+                                        key: UniqueKey(),
+                                      ),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
