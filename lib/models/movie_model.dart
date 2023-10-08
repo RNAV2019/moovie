@@ -119,7 +119,7 @@ class Genre {
       };
 }
 
-// Movie Duration
+// Movie Info
 MovieInfo movieInfoModelFromJson(String str) =>
     MovieInfo.fromJson(json.decode(str));
 
@@ -130,22 +130,83 @@ class MovieInfo {
     required this.runtime,
     required this.status,
     required this.videos,
+    required this.releaseDates,
   });
 
   int runtime;
   String status;
   Videos videos;
+  ReleaseDates releaseDates;
 
   factory MovieInfo.fromJson(Map<String, dynamic> json) => MovieInfo(
         runtime: json["runtime"],
         status: json["status"],
         videos: Videos.fromJson(json["videos"]),
+        releaseDates: ReleaseDates.fromJson(json["release_dates"]),
       );
 
   Map<String, dynamic> toJson() => {
         "runtime": runtime,
         "status": status,
         "videos": videos.toJson(),
+        "release_dates": releaseDates.toJson(),
+      };
+}
+
+// Movie Release Date / Certification
+class ReleaseDates {
+  List<ReleaseDatesResult> results;
+
+  ReleaseDates({
+    required this.results,
+  });
+
+  factory ReleaseDates.fromJson(Map<String, dynamic> json) => ReleaseDates(
+        results: List<ReleaseDatesResult>.from(
+            json["results"].map((x) => ReleaseDatesResult.fromJson(x))),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "results": List<dynamic>.from(results.map((x) => x.toJson())),
+      };
+}
+
+class ReleaseDatesResult {
+  String iso31661;
+  List<ReleaseDate> releaseDates;
+
+  ReleaseDatesResult({
+    required this.iso31661,
+    required this.releaseDates,
+  });
+
+  factory ReleaseDatesResult.fromJson(Map<String, dynamic> json) =>
+      ReleaseDatesResult(
+        iso31661: json["iso_3166_1"],
+        releaseDates: List<ReleaseDate>.from(
+            json["release_dates"].map((x) => ReleaseDate.fromJson(x))),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "iso_3166_1": iso31661,
+        "release_dates":
+            List<dynamic>.from(releaseDates.map((x) => x.toJson())),
+      };
+}
+
+class ReleaseDate {
+  String certification;
+
+  ReleaseDate({
+    required this.certification,
+  });
+
+  factory ReleaseDate.fromJson(Map<String, dynamic> json) => ReleaseDate(
+        certification: json["certification"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "certification": certification,
       };
 }
 

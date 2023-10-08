@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:moovie/models/image_model.dart';
 import 'package:moovie/models/movie_model.dart';
 
 const BASE_URL = "https://api.themoviedb.org/3/movie";
@@ -51,13 +52,27 @@ class ApiService {
   Future<MovieInfo?> getMovieInfo(int id) async {
     try {
       var uri = Uri.parse(
-          "$BASE_URL/${id.toString()}?api_key=${dotenv.env['API_KEY']}&append_to_response=videos");
+          "$BASE_URL/${id.toString()}?api_key=${dotenv.env['API_KEY']}&append_to_response=videos,release_dates");
       var response = await client.get(uri);
       if (response.statusCode == 200) {
         var json = response.body;
-        // var decoded = jsonDecode(json);
-        // return decoded["runtime"].toString();
         return movieInfoModelFromJson(json);
+      }
+    } catch (e, s) {
+      log("$e - $s");
+    }
+    return null;
+  }
+
+  // Get only the Poster Image from the id of the movie
+  Future<PosterImage?> getPosterImage(String id) async {
+    try {
+      var uri = Uri.parse(
+          "$BASE_URL/movie/$id/images?api_key=${dotenv.env['API_KEY']}");
+      var response = await client.get(uri);
+      if (response.statusCode == 200) {
+        var json = response.body;
+        return imageFromJson(json);
       }
     } catch (e, s) {
       log("$e - $s");

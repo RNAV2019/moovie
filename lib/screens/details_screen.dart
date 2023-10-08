@@ -1,5 +1,3 @@
-// ignore_for_file: constant_identifier_names
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +6,7 @@ import 'package:moovie/main.dart';
 import 'package:moovie/models/movie_model.dart';
 import 'package:moovie/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:unicons/unicons.dart';
 
 class DetailsScreen extends ConsumerStatefulWidget {
   final Result movie;
@@ -24,46 +23,46 @@ class DetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _DetailsScreenState extends ConsumerState<DetailsScreen> {
-  static const YOUTUBE_BASE_URL = "https://www.youtube.com/watch?v=";
-  late MovieInfo movieInfo;
+  static const String ytBaseUrl = "https://www.youtube.com/watch?v=";
+  static const Map<String, IconData> certificationIcons = <String, IconData>{
+    "U": UniconsLine.zero_plus,
+    "PG": UniconsLine.zero_plus,
+    "12A": UniconsLine.twelve_plus,
+    "12": UniconsLine.twelve_plus,
+    "16": UniconsLine.sixteen_plus,
+    "18": UniconsLine.eighteen_plus,
+    "R18": UniconsLine.eighteen_plus,
+  };
   late Future<MovieInfo?> futureMovieInfo;
+  late MovieInfo movieInfo;
+  late IconData? movieCertificationIcon = Icons.circle_outlined;
   late Uri movieTrailerUrl;
+  late String movieCertification;
 
   @override
   void initState() {
     futureMovieInfo = ApiService().getMovieInfo(widget.movie.id);
-    // futureMovieVideo = ApiService().getMovieTrailer(widget.movie.id);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       futureMovieInfo.then((info) {
         movieInfo = info!;
+        List<ReleaseDate> certResult = movieInfo.releaseDates.results
+            .where((element) => element.iso31661.toLowerCase() == 'gb')
+            .first
+            .releaseDates;
+        movieCertification = certResult
+            .where((element) => element.certification != '')
+            .first
+            .certification;
+        if (movieCertification == '15') {
+          movieCertification = '16';
+        }
+        movieCertificationIcon = certificationIcons[movieCertification];
         // Execute anything else you need to with your variable data.
-        movieTrailerUrl =
-            Uri.parse(YOUTUBE_BASE_URL + info.videos.results[0].key);
+        movieTrailerUrl = Uri.parse(ytBaseUrl + info.videos.results[0].key);
       });
     });
     super.initState();
-  }
-
-  MaterialColor getMaterialColor(Color color) {
-    final int red = color.red;
-    final int green = color.green;
-    final int blue = color.blue;
-
-    final Map<int, Color> shades = {
-      50: Color.fromRGBO(red, green, blue, .1),
-      100: Color.fromRGBO(red, green, blue, .2),
-      200: Color.fromRGBO(red, green, blue, .3),
-      300: Color.fromRGBO(red, green, blue, .4),
-      400: Color.fromRGBO(red, green, blue, .5),
-      500: Color.fromRGBO(red, green, blue, .6),
-      600: Color.fromRGBO(red, green, blue, .7),
-      700: Color.fromRGBO(red, green, blue, .8),
-      800: Color.fromRGBO(red, green, blue, .9),
-      900: Color.fromRGBO(red, green, blue, 1),
-    };
-
-    return MaterialColor(color.value, shades);
   }
 
   @override
@@ -264,6 +263,34 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        movieCertificationIcon,
+                                        color: isDarkMode
+                                            ? darkDynamic?.primary
+                                            : lightDynamic?.primary,
+                                        size: 22,
+                                      ),
+                                      const SizedBox(
+                                        width: 8,
+                                      ),
+                                      Text(
+                                        snapshot.hasData
+                                            ? movieCertification
+                                            : "Loading...",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDarkMode
+                                              ? darkDynamic?.onSurface
+                                              : lightDynamic?.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ],
@@ -284,25 +311,6 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                         ),
                       ),
                     ),
-                    // Padding(
-                    //   padding: const EdgeInsets.symmetric(horizontal: 20),
-                    //   child: SizedBox(
-                    //     width: MediaQuery.of(context).size.width,
-                    //     height: 64,
-                    //     child: ListView.separated(
-                    //       separatorBuilder: (context, index) {
-                    //         return const SizedBox(
-                    //           width: 8,
-                    //         );
-                    //       },
-                    //       scrollDirection: Axis.horizontal,
-                    //       itemCount: widget.genres.length,
-                    //       itemBuilder: (context, index) {
-                    //         return Chip(label: Text(widget.genres[index]));
-                    //       },
-                    //     ),
-                    //   ),
-                    // ),
                     Wrap(
                       direction: Axis.horizontal,
                       spacing: 8.0,
