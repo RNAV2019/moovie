@@ -13,12 +13,6 @@ const BASE_SERIES_URL = "https://api.themoviedb.org/3/tv";
 const BASE_IMAGE_URL = "https://image.tmdb.org/t/p/w500";
 const BASE_SEARCH_URL = "https://api.themoviedb.org/3/search/movie";
 
-const Map<String, String> API_HEADERS = <String, String>{
-  "Authorization":
-      "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJkYjA1ZDkwZTg2MTgxNjk5YTIzNWQ1MzI5N2VmNGM4MiIsInN1YiI6IjYyZjgwMTA1ZTc4Njg3MDA3YWM4YzE5YyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.zIFx_MF2o2Oimm8qlFUFUTR-TvjjH0tRnUjYw_yL9sM",
-  "Accept": "application/json"
-};
-
 class ApiService {
   var client = http.Client();
 
