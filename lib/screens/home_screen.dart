@@ -22,16 +22,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   String sortByCategory = 'movie';
   late final SharedPreferences prefs;
+  final ScrollController _scrollController =
+      ScrollController(initialScrollOffset: 0, keepScrollOffset: true);
+
+  void returnToTop() {
+    _scrollController.animateTo(
+      _scrollController.position.minScrollExtent,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.ease,
+    );
+  }
 
   List<MovieModel> movies = [];
   List<MovieInfo> movieInfos = [];
   bool isLoaded = false;
+  bool isTop = true;
 
   @override
   void initState() {
     super.initState();
     SharedPreferences.getInstance().then((value) {
       prefs = value;
+    });
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels > 2000) {
+        if (isTop == true) {
+          setState(() {
+            isTop = false;
+          });
+        }
+      } else {
+        setState(() {
+          isTop = true;
+        });
+      }
     });
   }
 
@@ -143,23 +167,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ),
                   Expanded(
                     child: sortByCategory == 'movie'
-                        ? const MoviePageBuilder()
-                        : const SeriesPageBuilder(),
+                        ? MoviePageBuilder(
+                            controller: _scrollController,
+                          )
+                        : SeriesPageBuilder(
+                            controller: _scrollController,
+                          ),
                   ),
                 ],
               ),
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor:
-                isDarkMode ? darkDynamic?.secondary : lightDynamic?.secondary,
-            onPressed: () => Navigator.of(context).pushNamed('/search'),
-            child: Icon(
-              Icons.search,
-              color: isDarkMode
-                  ? darkDynamic?.onSecondary
-                  : lightDynamic?.onSecondary,
-            ),
+          floatingActionButton: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              isTop == false
+                  ? FloatingActionButton.small(
+                      backgroundColor: isDarkMode
+                          ? darkDynamic?.secondary
+                          : lightDynamic?.secondary,
+                      onPressed: () => returnToTop(),
+                      child: Icon(
+                        Icons.arrow_upward_rounded,
+                        color: isDarkMode
+                            ? darkDynamic?.onSecondary
+                            : lightDynamic?.onSecondary,
+                        size: 22,
+                      ),
+                    )
+                  : Container(),
+              FloatingActionButton(
+                backgroundColor: isDarkMode
+                    ? darkDynamic?.secondary
+                    : lightDynamic?.secondary,
+                onPressed: () => Navigator.of(context).pushNamed('/search'),
+                child: Icon(
+                  Icons.search,
+                  color: isDarkMode
+                      ? darkDynamic?.onSecondary
+                      : lightDynamic?.onSecondary,
+                ),
+              ),
+            ],
           ),
         );
       },

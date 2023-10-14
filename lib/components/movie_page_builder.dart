@@ -13,7 +13,8 @@ import 'package:moovie/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MoviePageBuilder extends ConsumerStatefulWidget {
-  const MoviePageBuilder({super.key});
+  final ScrollController controller;
+  const MoviePageBuilder({super.key, required this.controller});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
@@ -45,7 +46,7 @@ class _MoviePageBuilderState extends ConsumerState<MoviePageBuilder>
       if (isLastPage) {
         _pagingController.appendLastPage(newItems);
       } else {
-        final nextPageKey = pageKey + newItems.length;
+        final nextPageKey = pageKey + 1;
         _pagingController.appendPage(newItems, nextPageKey);
       }
     } catch (error) {
@@ -91,6 +92,7 @@ class _MoviePageBuilderState extends ConsumerState<MoviePageBuilder>
             mainAxisSpacing: 20,
           ),
           pagingController: _pagingController,
+          scrollController: widget.controller,
           builderDelegate: PagedChildBuilderDelegate<MovieResult>(
             itemBuilder: (context, item, index) {
               return InkWell(

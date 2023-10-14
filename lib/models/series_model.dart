@@ -12,41 +12,30 @@ String seriesToJson(SeriesModel data) => json.encode(data.toJson());
 class SeriesModel {
   int page;
   List<SeriesResult> results;
-  int totalPages;
-  int totalResults;
 
   SeriesModel({
     required this.page,
     required this.results,
-    required this.totalPages,
-    required this.totalResults,
   });
 
   factory SeriesModel.fromJson(Map<String, dynamic> json) => SeriesModel(
         page: json["page"],
         results: List<SeriesResult>.from(
             json["results"].map((x) => SeriesResult.fromJson(x))),
-        totalPages: json["total_pages"],
-        totalResults: json["total_results"],
       );
 
   Map<String, dynamic> toJson() => {
         "page": page,
         "results": List<dynamic>.from(results.map((x) => x.toJson())),
-        "total_pages": totalPages,
-        "total_results": totalResults,
       };
 }
 
 class SeriesResult {
-  String backdropPath;
+  String? backdropPath;
   DateTime firstAirDate;
   List<int> genreIds;
   int id;
   String name;
-  List<String> originCountry;
-  String originalLanguage;
-  String originalName;
   String overview;
   double popularity;
   String? posterPath;
@@ -60,9 +49,6 @@ class SeriesResult {
     required this.genreIds,
     required this.id,
     required this.name,
-    required this.originCountry,
-    required this.originalLanguage,
-    required this.originalName,
     required this.overview,
     required this.popularity,
     required this.posterPath,
@@ -76,9 +62,6 @@ class SeriesResult {
         genreIds: List<int>.from(json["genre_ids"].map((x) => x)),
         id: json["id"],
         name: json["name"],
-        originCountry: List<String>.from(json["origin_country"].map((x) => x)),
-        originalLanguage: json["original_language"],
-        originalName: json["original_name"],
         overview: json["overview"],
         popularity: json["popularity"]?.toDouble(),
         posterPath: json["poster_path"],
@@ -93,9 +76,6 @@ class SeriesResult {
         "genre_ids": List<dynamic>.from(genreIds.map((x) => x)),
         "id": id,
         "name": name,
-        "origin_country": List<dynamic>.from(originCountry.map((x) => x)),
-        "original_language": originalLanguage,
-        "original_name": originalName,
         "overview": overview,
         "popularity": popularity,
         "poster_path": posterPath,

@@ -13,7 +13,8 @@ import 'package:moovie/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SeriesPageBuilder extends ConsumerStatefulWidget {
-  const SeriesPageBuilder({super.key});
+  final ScrollController controller;
+  const SeriesPageBuilder({super.key, required this.controller});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
@@ -42,7 +43,7 @@ class _SeriesPageBuilderState extends ConsumerState<SeriesPageBuilder>
       prefs = value;
     });
     getListGenres();
-    _pagingController.addPageRequestListener((pageKey) {
+    _pagingController.addPageRequestListener((int pageKey) {
       _fetchPage(pageKey);
     });
   }
@@ -61,14 +62,14 @@ class _SeriesPageBuilderState extends ConsumerState<SeriesPageBuilder>
     }
   }
 
-  Future<void> _fetchPage(int pageKey) async {
+  Future _fetchPage(int pageKey) async {
     try {
       final newItems = (await ApiService().getPopularSeries(pageKey))!;
       final isLastPage = newItems.length < _pageSize;
       if (isLastPage) {
         _pagingController.appendLastPage(newItems);
       } else {
-        final nextPageKey = pageKey + newItems.length;
+        final nextPageKey = pageKey + 1;
         _pagingController.appendPage(newItems, nextPageKey);
       }
     } catch (error) {
@@ -89,6 +90,7 @@ class _SeriesPageBuilderState extends ConsumerState<SeriesPageBuilder>
             mainAxisSpacing: 20,
           ),
           pagingController: _pagingController,
+          scrollController: widget.controller,
           builderDelegate: PagedChildBuilderDelegate<SeriesResult>(
             itemBuilder: (context, item, index) {
               return InkWell(
@@ -148,7 +150,6 @@ class _SeriesPageBuilderState extends ConsumerState<SeriesPageBuilder>
                   prefs.setStringList('favs', favList);
                   prefs.setStringList('favs-genre', favGenreList);
                   prefs.setStringList('favs-types', favTypes);
-                  print('${item.name} has been held down btw');
                 },
                 child: Container(
                   alignment: Alignment.center,

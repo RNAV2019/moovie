@@ -5,11 +5,12 @@ import 'package:moovie/main.dart';
 
 class CategoryChips extends ConsumerStatefulWidget {
   String sortByCategory;
-  Null Function(String value) updateSortByCategory;
-  CategoryChips(
-      {super.key,
-      required this.sortByCategory,
-      required this.updateSortByCategory});
+  final Null Function(String value) updateSortByCategory;
+  CategoryChips({
+    super.key,
+    required this.sortByCategory,
+    required this.updateSortByCategory,
+  });
 
   @override
   ConsumerState<CategoryChips> createState() => _CategoryChipsState();
@@ -34,7 +35,6 @@ class _CategoryChipsState extends ConsumerState<CategoryChips> {
                 setState(() {
                   widget.sortByCategory = 'movie';
                   widget.updateSortByCategory('movie');
-                  print(widget.sortByCategory);
                 });
               }
             },
@@ -54,7 +54,6 @@ class _CategoryChipsState extends ConsumerState<CategoryChips> {
                 setState(() {
                   widget.sortByCategory = 'series';
                   widget.updateSortByCategory('series');
-                  print(widget.sortByCategory);
                 });
               }
             },
