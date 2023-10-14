@@ -4,31 +4,17 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:moovie/models/image_model.dart';
 import 'package:moovie/models/movie_model.dart';
+import 'package:moovie/models/search_model.dart';
+import 'package:moovie/models/series_model.dart';
 
-const BASE_URL = "https://api.themoviedb.org/3/movie";
+const BASE_MOVIE_URL = "https://api.themoviedb.org/3/movie";
+const BASE_SERIES_URL = "https://api.themoviedb.org/3/tv";
 const BASE_IMAGE_URL = "https://image.tmdb.org/t/p/w500";
 const BASE_SEARCH_URL = "https://api.themoviedb.org/3/search/movie";
 
 class ApiService {
   var client = http.Client();
-
-  // Gets a list of recent movies
-  Future<List<Result>?> getMovies(int page) async {
-    try {
-      var uri = Uri.parse(
-          "$BASE_URL/now_playing?api_key=${dotenv.env['API_KEY']}&page=$page&language=en_GB");
-      var response = await client.get(uri);
-      if (response.statusCode == 200) {
-        var json = response.body;
-        return movieModelFromJson(json).results;
-      }
-    } catch (e, s) {
-      log("$e - $s");
-    }
-    return null;
-  }
 
   // Gets the list of genres
   Future<dynamic> getGenres() async {
@@ -48,11 +34,43 @@ class ApiService {
     return;
   }
 
-  // Get Movie Info (Runtime, Status and Trailer Video) from Movie
+  // Gets a list of popular movies
+  Future<List<MovieResult>?> getPopularMovies(int page) async {
+    try {
+      var uri = Uri.parse(
+          "$BASE_MOVIE_URL/now_playing?api_key=${dotenv.env['API_KEY']}&page=$page&language=en_GB");
+      var response = await client.get(uri);
+      if (response.statusCode == 200) {
+        var json = response.body;
+        return movieModelFromJson(json).results;
+      }
+    } catch (e, s) {
+      log("$e - $s");
+    }
+    return null;
+  }
+
+  // Gets a list of popular series
+  Future<List<SeriesResult>?> getPopularSeries(int page) async {
+    try {
+      var uri = Uri.parse(
+          "$BASE_SERIES_URL/top_rated?api_key=${dotenv.env['API_KEY']}&page=$page&language=en_GB");
+      var response = await client.get(uri);
+      if (response.statusCode == 200) {
+        var json = response.body;
+        return seriesFromJson(json).results;
+      }
+    } catch (e, s) {
+      log("$e - $s");
+    }
+    return null;
+  }
+
+  // Get Movie Info (Runtime, Status and Trailer Video) from Movie ID
   Future<MovieInfo?> getMovieInfo(int id) async {
     try {
       var uri = Uri.parse(
-          "$BASE_URL/${id.toString()}?api_key=${dotenv.env['API_KEY']}&append_to_response=videos,release_dates");
+          "$BASE_MOVIE_URL/${id.toString()}?api_key=${dotenv.env['API_KEY']}&append_to_response=videos,release_dates");
       var response = await client.get(uri);
       if (response.statusCode == 200) {
         var json = response.body;
@@ -64,15 +82,15 @@ class ApiService {
     return null;
   }
 
-  // Get only the Poster Image from the id of the movie
-  Future<PosterImage?> getPosterImage(String id) async {
+  // Get Series Info from Series ID
+  Future<SeriesInfo?> getSeriesInfo(int id) async {
     try {
       var uri = Uri.parse(
-          "$BASE_URL/movie/$id/images?api_key=${dotenv.env['API_KEY']}");
+          "$BASE_SERIES_URL/${id.toString()}?api_key=${dotenv.env['API_KEY']}&append_to_response=content_ratings");
       var response = await client.get(uri);
       if (response.statusCode == 200) {
         var json = response.body;
-        return imageFromJson(json);
+        return seriesInfoModelFromJson(json);
       }
     } catch (e, s) {
       log("$e - $s");

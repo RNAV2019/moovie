@@ -6,17 +6,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moovie/main.dart';
 import 'package:moovie/models/movie_model.dart';
-import 'package:moovie/screens/details_screen.dart';
+import 'package:moovie/models/series_model.dart';
+import 'package:moovie/screens/movie_details_screen.dart';
+import 'package:moovie/screens/series_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FavouritesScreen extends ConsumerStatefulWidget {
-  final List<String> movieInfo;
+  final List<String> movieSeriesInfo;
   final List<String> genreLists;
-  const FavouritesScreen(
-      {super.key, required this.movieInfo, required this.genreLists});
+  final List<String> typeInfo;
+  const FavouritesScreen({
+    super.key,
+    required this.movieSeriesInfo,
+    required this.genreLists,
+    required this.typeInfo,
+  });
 
   @override
   ConsumerState<FavouritesScreen> createState() => _FavouritesScreenState();
+}
+
+enum TypeInfo {
+  movie,
+  series,
 }
 
 class _FavouritesScreenState extends ConsumerState<FavouritesScreen> {
@@ -53,7 +65,7 @@ class _FavouritesScreenState extends ConsumerState<FavouritesScreen> {
           : lightDynamic?.onSurfaceVariant,
       onPressed: () {
         setState(() {
-          widget.movieInfo.clear();
+          widget.movieSeriesInfo.clear();
           widget.genreLists.clear();
         });
         prefs.clear();
@@ -163,7 +175,7 @@ class _FavouritesScreenState extends ConsumerState<FavouritesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: GridView.builder(
                 shrinkWrap: true,
-                itemCount: widget.movieInfo.length,
+                itemCount: widget.movieSeriesInfo.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 16,
@@ -171,60 +183,105 @@ class _FavouritesScreenState extends ConsumerState<FavouritesScreen> {
                   childAspectRatio: 1800 / 2700,
                 ),
                 itemBuilder: (context, index) {
-                  String stringInfo = widget.movieInfo[index];
+                  String stringInfo = widget.movieSeriesInfo[index];
+                  TypeInfo typeInfo =
+                      TypeInfo.values.byName(widget.typeInfo[index]);
                   Map<String, dynamic> jsonInfo = json.decode(stringInfo);
-                  Result res = Result.fromJson(jsonInfo);
+                  late MovieResult movieResult;
+                  late SeriesResult seriesResult;
+                  if (typeInfo == TypeInfo.movie) {
+                    movieResult = MovieResult.fromJson(jsonInfo);
+                  } else {
+                    seriesResult = SeriesResult.fromJson(jsonInfo);
+                  }
                   return InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => DetailsScreen(
-                            movie: res,
-                            genres: widget.genreLists[index].split('--'),
+                      if (typeInfo == TypeInfo.movie) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => MovieDetailsScreen(
+                              movie: movieResult,
+                              genres: widget.genreLists[index].split('--'),
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SeriesDetailsScreen(
+                              series: seriesResult,
+                              genres: widget.genreLists[index].split('--'),
+                            ),
+                          ),
+                        );
+                      }
                     },
                     onLongPress: () {
                       setState(() {
-                        widget.movieInfo.removeAt(index);
+                        widget.movieSeriesInfo.removeAt(index);
                         widget.genreLists.removeAt(index);
+                        widget.typeInfo.removeAt(index);
                       });
-                      prefs.setStringList('favs', widget.movieInfo);
+                      prefs.setStringList('favs', widget.movieSeriesInfo);
                       prefs.setStringList('favs-genre', widget.genreLists);
+                      prefs.setStringList('favs-types', widget.typeInfo);
                     },
-                    child: Hero(
-                      tag: res.id,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: res.posterPath == null
-                            ? Container(
-                                width: 1800,
-                                height: 2700,
-                                color: isDarkMode
-                                    ? darkDynamic?.error
-                                    : lightDynamic?.error,
-                                child: Center(
-                                    child: Icon(
-                                  Icons.block,
-                                  color: isDarkMode
-                                      ? darkDynamic?.errorContainer
-                                      : lightDynamic?.errorContainer,
-                                  size: 64,
-                                )),
-                              )
-                            : CachedNetworkImage(
-                                imageUrl:
-                                    "https://image.tmdb.org/t/p/original${res.posterPath}",
-                                key: UniqueKey(),
-                              ),
-                      ),
-                    ),
+                    child: typeInfo == TypeInfo.movie
+                        ? Display(
+                            id: movieResult.id,
+                            posterPath: movieResult.posterPath)
+                        : Display(
+                            id: seriesResult.id,
+                            posterPath: seriesResult.posterPath),
                   );
                 },
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class Display extends ConsumerWidget {
+  final int id;
+  final String? posterPath;
+  const Display({
+    super.key,
+    required this.id,
+    required this.posterPath,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    bool isDarkMode = ref.watch(darkModeProvider);
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        return Hero(
+          tag: id,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: posterPath == null
+                ? Container(
+                    width: 1800,
+                    height: 2700,
+                    color:
+                        isDarkMode ? darkDynamic?.error : lightDynamic?.error,
+                    child: Center(
+                        child: Icon(
+                      Icons.block,
+                      color: isDarkMode
+                          ? darkDynamic?.errorContainer
+                          : lightDynamic?.errorContainer,
+                      size: 64,
+                    )),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: "https://image.tmdb.org/t/p/original$posterPath",
+                    key: UniqueKey(),
+                  ),
           ),
         );
       },

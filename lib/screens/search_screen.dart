@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moovie/components/search.dart';
 import 'package:moovie/main.dart';
 import 'package:moovie/models/movie_model.dart';
-import 'package:moovie/screens/details_screen.dart';
+import 'package:moovie/models/search_model.dart';
+import 'package:moovie/screens/movie_details_screen.dart';
 import 'package:moovie/services/api_service.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -135,8 +136,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 }
 
                                 Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) => DetailsScreen(
-                                          movie: Result.fromJson(
+                                    builder: (context) => MovieDetailsScreen(
+                                          movie: MovieResult.fromJson(
                                               results![index].toJson()),
                                           genres: genreNames,
                                         )));

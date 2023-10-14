@@ -20,13 +20,13 @@ class MovieModel {
 
   int page;
   int totalPages;
-  List<Result> results;
+  List<MovieResult> results;
 
   factory MovieModel.fromJson(Map<String, dynamic> json) => MovieModel(
         page: json["page"],
         totalPages: json["total_pages"],
-        results:
-            List<Result>.from(json["results"].map((x) => Result.fromJson(x))),
+        results: List<MovieResult>.from(
+            json["results"].map((x) => MovieResult.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
@@ -36,8 +36,8 @@ class MovieModel {
       };
 }
 
-class Result {
-  Result({
+class MovieResult {
+  MovieResult({
     required this.id,
     required this.overview,
     required this.posterPath,
@@ -54,8 +54,9 @@ class Result {
   String title;
   double voteAverage;
   List<int> genreIds;
+  String type = "movie";
 
-  factory Result.fromJson(Map<String, dynamic> json) => Result(
+  factory MovieResult.fromJson(Map<String, dynamic> json) => MovieResult(
         id: json["id"],
         overview: json["overview"],
         posterPath: json["poster_path"],
@@ -74,48 +75,6 @@ class Result {
         "title": title,
         "vote_average": voteAverage,
         "genre_ids": List<dynamic>.from(genreIds.map((x) => x)),
-      };
-}
-
-// Genre Model
-GenreModel genreModelFromJson(String str) =>
-    GenreModel.fromJson(json.decode(str));
-
-String genreModelToJson(GenreModel data) => json.encode(data.toJson());
-
-class GenreModel {
-  GenreModel({
-    required this.genres,
-  });
-
-  List<Genre> genres;
-
-  factory GenreModel.fromJson(Map<String, dynamic> json) => GenreModel(
-        genres: List<Genre>.from(json["genres"].map((x) => Genre.fromJson(x))),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "genres": List<dynamic>.from(genres.map((x) => x.toJson())),
-      };
-}
-
-class Genre {
-  Genre({
-    required this.id,
-    required this.name,
-  });
-
-  int id;
-  String name;
-
-  factory Genre.fromJson(Map<String, dynamic> json) => Genre(
-        id: json["id"],
-        name: json["name"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
       };
 }
 
@@ -310,80 +269,4 @@ class EnumValues<T> {
     reverseMap;
     return reverseMap;
   }
-}
-
-// Search Model
-
-SearchModel searchModelFromJson(String str) =>
-    SearchModel.fromJson(json.decode(str));
-
-String searchModelToJson(SearchModel data) => json.encode(data.toJson());
-
-class SearchModel {
-  SearchModel({
-    required this.page,
-    required this.results,
-    required this.totalPages,
-    required this.totalResults,
-  });
-
-  int page;
-  List<SearchResult> results;
-  int totalPages;
-  int totalResults;
-
-  factory SearchModel.fromJson(Map<String, dynamic> json) => SearchModel(
-        page: json["page"],
-        results: List<SearchResult>.from(
-            json["results"].map((x) => SearchResult.fromJson(x))),
-        totalPages: json["total_pages"],
-        totalResults: json["total_results"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "page": page,
-        "results": List<dynamic>.from(results.map((x) => x.toJson())),
-        "total_pages": totalPages,
-        "total_results": totalResults,
-      };
-}
-
-class SearchResult {
-  SearchResult({
-    required this.id,
-    required this.overview,
-    required this.posterPath,
-    required this.releaseDate,
-    required this.title,
-    required this.voteAverage,
-    required this.genreIds,
-  });
-
-  int id;
-  String overview;
-  String? posterPath;
-  String releaseDate;
-  String title;
-  double voteAverage;
-  List<int> genreIds;
-
-  factory SearchResult.fromJson(Map<String, dynamic> json) => SearchResult(
-        genreIds: List<int>.from(json["genre_ids"].map((x) => x)),
-        id: json["id"],
-        overview: json["overview"],
-        posterPath: json["poster_path"],
-        releaseDate: json["release_date"],
-        title: json["title"],
-        voteAverage: json["vote_average"].toDouble(),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "genre_ids": List<dynamic>.from(genreIds.map((x) => x)),
-        "id": id,
-        "overview": overview,
-        "poster_path": posterPath,
-        "release_date": releaseDate,
-        "title": title,
-        "vote_average": voteAverage,
-      };
 }

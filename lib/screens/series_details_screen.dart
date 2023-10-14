@@ -3,27 +3,27 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moovie/main.dart';
-import 'package:moovie/models/movie_model.dart';
+import 'package:moovie/models/series_model.dart';
 import 'package:moovie/services/api_service.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:unicons/unicons.dart';
 
-class DetailsScreen extends ConsumerStatefulWidget {
-  final Result movie;
+class SeriesDetailsScreen extends ConsumerStatefulWidget {
+  final SeriesResult series;
   final List<String> genres;
 
-  const DetailsScreen({
+  const SeriesDetailsScreen({
     Key? key,
-    required this.movie,
+    required this.series,
     required this.genres,
   }) : super(key: key);
 
   @override
-  ConsumerState<DetailsScreen> createState() => _DetailsScreenState();
+  ConsumerState<SeriesDetailsScreen> createState() =>
+      _SeriesDetailsScreenState();
 }
 
-class _DetailsScreenState extends ConsumerState<DetailsScreen> {
-  static const String ytBaseUrl = "https://www.youtube.com/watch?v=";
+class _SeriesDetailsScreenState extends ConsumerState<SeriesDetailsScreen> {
+  // static const String ytBaseUrl = "https://www.youtube.com/watch?v=";
   static const Map<String, IconData> certificationIcons = <String, IconData>{
     "U": UniconsLine.zero_plus,
     "PG": UniconsLine.zero_plus,
@@ -33,33 +33,30 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
     "18": UniconsLine.eighteen_plus,
     "R18": UniconsLine.eighteen_plus,
   };
-  late Future<MovieInfo?> futureMovieInfo;
-  late MovieInfo movieInfo;
-  late IconData? movieCertificationIcon = Icons.circle_outlined;
-  late Uri movieTrailerUrl;
-  late String movieCertification;
+  late Future<SeriesInfo?> futureSeriesInfo;
+  late SeriesInfo seriesInfo;
+  IconData? seriesCertificationIcon = Icons.circle_outlined;
+  // late Uri seriesTrailerUrl;
+  String seriesCertification = "No Rating Found";
 
   @override
   void initState() {
-    futureMovieInfo = ApiService().getMovieInfo(widget.movie.id);
+    print(widget.series.id);
+    futureSeriesInfo = ApiService().getSeriesInfo(widget.series.id);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      futureMovieInfo.then((info) {
-        movieInfo = info!;
-        List<ReleaseDate> certResult = movieInfo.releaseDates.results
-            .where((element) => element.iso31661.toLowerCase() == 'gb')
+      futureSeriesInfo.then((info) {
+        seriesInfo = info!;
+        seriesCertification = seriesInfo.contentRatings!.results!
+            .where((element) => element.iso31661!.toLowerCase() == 'gb')
             .first
-            .releaseDates;
-        movieCertification = certResult
-            .where((element) => element.certification != '')
-            .first
-            .certification;
-        if (movieCertification == '15') {
-          movieCertification = '16';
+            .rating!;
+        if (seriesCertification == '15') {
+          seriesCertification = '16';
         }
-        movieCertificationIcon = certificationIcons[movieCertification];
+        seriesCertificationIcon = certificationIcons[seriesCertification];
         // Execute anything else you need to with your variable data.
-        movieTrailerUrl = Uri.parse(ytBaseUrl + info.videos.results[0].key);
+        // movieTrailerUrl = Uri.parse(ytBaseUrl + info.videos.results[0].key);
       });
     });
     super.initState();
@@ -71,7 +68,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
         return FutureBuilder(
-          future: futureMovieInfo,
+          future: futureSeriesInfo,
           builder: (context, snapshot) {
             return Scaffold(
               backgroundColor:
@@ -115,10 +112,10 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                 width: 180,
                                 height: 270,
                                 child: Hero(
-                                  tag: widget.movie.id,
+                                  tag: widget.series.id,
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: widget.movie.posterPath == null
+                                    child: widget.series.posterPath == null
                                         ? Container(
                                             width: 1800,
                                             height: 2700,
@@ -137,7 +134,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                           )
                                         : CachedNetworkImage(
                                             imageUrl:
-                                                'https://image.tmdb.org/t/p/original${widget.movie.posterPath}',
+                                                'https://image.tmdb.org/t/p/original${widget.series.posterPath}',
                                             key: UniqueKey(),
                                           ),
                                   ),
@@ -157,7 +154,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                     width:
                                         MediaQuery.of(context).size.width * 0.4,
                                     child: Text(
-                                      widget.movie.title,
+                                      widget.series.name,
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall!
@@ -173,13 +170,18 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                     height: 8,
                                   ),
                                   Text(
-                                    snapshot.hasData
-                                        ? movieInfo.status
+                                    snapshot.hasData &&
+                                            seriesInfo.status != null
+                                        ? seriesInfo.status!
                                         : "Loading...",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: snapshot.hasData &&
-                                              (movieInfo.status == 'Released')
+                                              (seriesInfo.status == 'Returning Series' ||
+                                                  seriesInfo.status ==
+                                                      'In Production' ||
+                                                  seriesInfo.status ==
+                                                      'Planned')
                                           ? Colors.green.shade800
                                           : darkDynamic?.errorContainer,
                                     ),
@@ -190,7 +192,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                   Row(
                                     children: [
                                       Icon(
-                                        Icons.calendar_month_outlined,
+                                        UniconsLine.film,
                                         color: isDarkMode
                                             ? darkDynamic?.primary
                                             : lightDynamic?.primary,
@@ -200,12 +202,38 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                         width: 8,
                                       ),
                                       Text(
-                                        '${widget.movie.releaseDate?.day}/${widget.movie.releaseDate?.month}/${widget.movie.releaseDate?.year}',
+                                        '${widget.series.firstAirDate.day}/${widget.series.firstAirDate.month}/${widget.series.firstAirDate.year}',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: isDarkMode
                                               ? darkDynamic?.onSurface
                                               : lightDynamic?.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 6,
+                                      ),
+                                      Tooltip(
+                                        triggerMode: TooltipTriggerMode.tap,
+                                        preferBelow: true,
+                                        enableFeedback: true,
+                                        verticalOffset: 10.0,
+                                        textAlign: TextAlign.center,
+                                        textStyle: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 2,
+                                        ),
+                                        showDuration:
+                                            const Duration(milliseconds: 2000),
+                                        message: 'Date the first episode aired',
+                                        child: Icon(
+                                          UniconsLine.info_circle,
+                                          color: darkDynamic?.primary,
+                                          size: 16,
                                         ),
                                       ),
                                     ],
@@ -226,13 +254,14 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                         width: 8,
                                       ),
                                       Text(
-                                          '${widget.movie.voteAverage.toString()}/10',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: isDarkMode
-                                                ? darkDynamic?.onSurface
-                                                : lightDynamic?.onSurface,
-                                          )),
+                                        '${widget.series.voteAverage.toString()}/10',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDarkMode
+                                              ? darkDynamic?.onSurface
+                                              : lightDynamic?.onSurface,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(
@@ -241,7 +270,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                   Row(
                                     children: [
                                       Icon(
-                                        Icons.schedule,
+                                        UniconsLine.tv_retro,
                                         color: isDarkMode
                                             ? darkDynamic?.primary
                                             : lightDynamic?.primary,
@@ -252,7 +281,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                       ),
                                       Text(
                                         snapshot.hasData
-                                            ? "${movieInfo.runtime} mins"
+                                            ? "${seriesInfo.numberOfSeasons} ${seriesInfo.numberOfSeasons == 1 ? 'season' : 'seasons'}"
                                             : "Loading...",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
@@ -269,7 +298,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                   Row(
                                     children: [
                                       Icon(
-                                        movieCertificationIcon,
+                                        UniconsLine.video,
                                         color: isDarkMode
                                             ? darkDynamic?.primary
                                             : lightDynamic?.primary,
@@ -280,7 +309,35 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                       ),
                                       Text(
                                         snapshot.hasData
-                                            ? movieCertification
+                                            ? "${seriesInfo.numberOfEpisodes} ${seriesInfo.numberOfEpisodes == 1 ? 'episode' : 'episodes'}"
+                                            : "Loading...",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDarkMode
+                                              ? darkDynamic?.onSurface
+                                              : lightDynamic?.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        seriesCertificationIcon,
+                                        color: isDarkMode
+                                            ? darkDynamic?.primary
+                                            : lightDynamic?.primary,
+                                        size: 22,
+                                      ),
+                                      const SizedBox(
+                                        width: 8,
+                                      ),
+                                      Text(
+                                        snapshot.hasData
+                                            ? seriesCertification
                                             : "Loading...",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
@@ -302,7 +359,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 18),
                       child: Text(
-                        widget.movie.overview,
+                        widget.series.overview,
                         style: TextStyle(
                           fontSize: 18,
                           color: isDarkMode
@@ -332,27 +389,27 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                   ],
                 ),
               ),
-              floatingActionButton: FloatingActionButton(
-                backgroundColor: isDarkMode
-                    ? darkDynamic?.secondary
-                    : lightDynamic?.secondary,
-                onPressed: () async {
-                  if (await canLaunchUrl(movieTrailerUrl)) {
-                    await launchUrl(
-                      movieTrailerUrl,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  } else {
-                    throw 'Could not launch $movieTrailerUrl';
-                  }
-                },
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  color: isDarkMode
-                      ? darkDynamic?.onSecondary
-                      : lightDynamic?.onSecondary,
-                ),
-              ),
+              // floatingActionButton: FloatingActionButton(
+              //   backgroundColor: isDarkMode
+              //       ? darkDynamic?.secondary
+              //       : lightDynamic?.secondary,
+              //   onPressed: () async {
+              //     if (await canLaunchUrl(movieTrailerUrl)) {
+              //       await launchUrl(
+              //         movieTrailerUrl,
+              //         mode: LaunchMode.externalApplication,
+              //       );
+              //     } else {
+              //       throw 'Could not launch $movieTrailerUrl';
+              //     }
+              //   },
+              //   child: Icon(
+              //     Icons.play_arrow_rounded,
+              //     color: isDarkMode
+              //         ? darkDynamic?.onSecondary
+              //         : lightDynamic?.onSecondary,
+              //   ),
+              // ),
             );
           },
         );
